@@ -1,0 +1,15 @@
+language: python
+sudo: required
+dist: xenial
+python:
+  - "3.6"
+  - "3.7"
+# command to install dependencies
+install:
+  - pip install -q -r test_requirements.txt
+  - python setup.py -q install
+  - pip freeze
+# command to run tests
+script:
+    - flake8 .
+    - mypy csob_paymentgateway

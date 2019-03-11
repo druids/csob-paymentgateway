@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 from os import path
 
-from csob_paymentgateway.version import get_version
+from csob.version import get_version
 
 here = path.abspath(path.dirname(__file__))
 
@@ -38,7 +38,9 @@ setup(
     python_requires='>=3.6, <4',
     install_requires=[],
     extras_require={
-        'dev': [],
+        'dev': [
+            'spinhx',
+        ],
         'test': [],
     },
     project_urls={

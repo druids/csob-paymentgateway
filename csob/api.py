@@ -2,10 +2,10 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional, Union
 
-from csob_paymentgateway.enums import (
+from csob.enums import (
     Currency, HTTPMethod, Language, PaymentButtonBrand, PayMethod, PayOperation, ResultCode
 )
-from csob_paymentgateway.payment import Item, Payment
+from csob.payment import Item, Payment
 
 
 AmountHundredths = Union[Decimal, int]

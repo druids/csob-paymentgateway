@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Optional, Union
 
-from csob_paymentgateway.enums import PaymentStatus
+from csob.enums import PaymentStatus
 
 
 class Payment:

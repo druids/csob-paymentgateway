@@ -1,4 +1,11 @@
+from typing import Optional
+
+
 class CSOBBaseException(Exception):
+    pass
+
+
+class GatewaySignatureInvalid(CSOBBaseException):
     pass
 
 
@@ -70,9 +77,11 @@ class ServiceUnavailableResponseException(ServiceResponseException):
 class ServiceResultCodeException(CSOBBaseException):
     code: int
     message: str
+    api_response: Optional
 
-    def __init__(self, message=None):
+    def __init__(self, message=None, api_response=None):
         self.message = message
+        self.api_response = api_response
         super().__init__()
 
 

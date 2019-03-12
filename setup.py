@@ -36,14 +36,24 @@ setup(
     keywords='payments finance csob paymentgateway',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     python_requires='>=3.6, <4',
-    install_requires=[],
+    install_requires=[
+        'pycrypto',
+    ],
     extras_require={
         'dev': [
             'spinhx',
         ],
-        'test': [],
+        'test': [
+            'freezegun',
+        ],
     },
-    data_files=[('csob_keys', ['csob_keys/*.pub', 'csob_keys/*.cer'])],
+    data_files=[('csob_keys', [
+        'csob_keys/mips_platebnibrana.csob.cz.cer',
+        'csob_keys/mips_platebnibrana.csob.cz.pub',
+        'csob_keys/mips_iplatebnibrana.csob.cz.cer',
+        'csob_keys/mips_iplatebnibrana.csob.cz.pub',
+        'csob_keys/readme.txt',
+    ])],
     project_urls={
         'Source': 'https://github.com/druids/csob-paymentgateway',
     },

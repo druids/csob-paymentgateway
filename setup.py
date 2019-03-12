@@ -1,5 +1,6 @@
-from setuptools import setup, find_packages
 from os import path
+
+from setuptools import find_packages, setup
 
 from csob.version import get_version
 
@@ -52,6 +53,7 @@ setup(
         'csob_keys/mips_platebnibrana.csob.cz.pub',
         'csob_keys/mips_iplatebnibrana.csob.cz.cer',
         'csob_keys/mips_iplatebnibrana.csob.cz.pub',
+        'csob_keys/rsa_test_A3746UdxZO.key',
         'csob_keys/readme.txt',
     ])],
     project_urls={

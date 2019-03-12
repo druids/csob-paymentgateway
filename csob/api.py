@@ -51,7 +51,7 @@ class APIClient:
             raise_exceptions: Whether should functions return APIResponse with errors or raise exceptions.
 
         Warnings:
-            If cart specified at least 1 item (e.g. “Your purchase”) and at most 2 items must be in the cart
+            If cart specified is specified it has to have at least 1 item (e.g. “Your purchase”) and at most 2 items.
             (e.g. “Your purchase” and “Shipping & Handling”). The limitation is given by the graphical design.
         """
         raise NotImplementedError()

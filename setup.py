@@ -43,6 +43,7 @@ setup(
         ],
         'test': [],
     },
+    data_files=[('csob_keys', ['csob_keys/*.pub', 'csob_keys/*.cer'])],
     project_urls={
         'Source': 'https://github.com/druids/csob-paymentgateway',
     },

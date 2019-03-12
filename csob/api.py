@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 from csob.enums import (
     Currency, HTTPMethod, Language, PaymentButtonBrand, PayMethod, PayOperation, ResultCode
 )
-from csob.payment import Item, Payment
+from csob.payment import Item
 
 
 AmountHundredths = Union[Decimal, int]
@@ -16,15 +16,6 @@ class APIResponse:
     date_time: datetime
     signature: str
     result_code: ResultCode
-
-    def get_payment_data(self) -> Payment:
-        """
-        From response_json get Payment object.
-
-        Returns:
-            Payment
-        """
-        raise NotImplementedError()
 
     def is_okay(self) -> bool:
         """
@@ -47,7 +38,7 @@ class APIClient:
 
     def __init__(self, merchant_id: str, private_key_path: str, gateway_public_key_path: Optional[str] = None,
                  private_key_password: Optional[str] = None, api_url: str = "https://api.platebnibrana.csob.cz",
-                 raise_exceptions: bool = False):
+                 raise_exceptions: bool = False) -> None:
         """
         Load private and public key.
 

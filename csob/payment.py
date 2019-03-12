@@ -1,17 +1,6 @@
 from decimal import Decimal
 from typing import Optional, Union
 
-from csob.enums import PaymentStatus
-
-
-class Payment:
-    """
-    The object holding payment status data.
-    """
-    pay_id: str
-    payment_status: PaymentStatus
-    auth_code: str
-
 
 class Item:
     """
@@ -30,7 +19,8 @@ class Item:
     amount: Union[Decimal, int]
     description: Optional[str] = None
 
-    def __init__(self, name: str, amount: Union[Decimal, int], quantity: int = 1, description: Optional[str] = None):
+    def __init__(self, name: str, amount: Union[Decimal, int], quantity: int = 1,
+                 description: Optional[str] = None) -> None:
         """
 
         Args:
@@ -45,3 +35,5 @@ class Item:
         self.quantity = quantity
         if description is not None:
             self.description = description
+
+        return

@@ -1,4 +1,7 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from csob.api import APIResponse
 
 
 class CSOBBaseException(Exception):
@@ -77,7 +80,7 @@ class ServiceUnavailableResponseException(ServiceResponseException):
 class ServiceResultCodeException(CSOBBaseException):
     code: int
     message: str
-    api_response: Optional
+    api_response: Optional["APIResponse"]
 
     def __init__(self, message=None, api_response=None):
         self.message = message

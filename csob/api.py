@@ -1,30 +1,19 @@
-from datetime import datetime
+import os
+import sys
 from decimal import Decimal
 from typing import List, Optional, Union
 
+import requests
+import import_string
+
+from csob.api_response import APIResponse
 from csob.enums import (
     Currency, HTTPMethod, Language, PaymentButtonBrand, PayMethod, PayOperation, ResultCode
 )
 from csob.payment import Item
-
+from csob.resources.echo import EchoResource
 
 AmountHundredths = Union[Decimal, int]
-
-
-class APIResponse:
-    response_json: dict
-    date_time: datetime
-    signature: str
-    result_code: ResultCode
-
-    def is_okay(self) -> bool:
-        """
-        Check if result code is OK or 8*0.
-
-        Returns:
-            bool
-        """
-        raise NotImplementedError()
 
 
 class APIClient:
@@ -34,11 +23,17 @@ class APIClient:
     Attributes:
     """
     merchant_id: str
+    private_key_path: str
+    gateway_public_key_path: str
+    _gateway_public_key: Optional[str] = None
+    private_key_password: Optional[str]
+    api_url: str
+    session: requests.Session
     raise_exceptions: bool
 
     def __init__(self, merchant_id: str, private_key_path: str, gateway_public_key_path: Optional[str] = None,
                  private_key_password: Optional[str] = None, api_url: str = "https://api.platebnibrana.csob.cz",
-                 raise_exceptions: bool = False) -> None:
+                 session_generator_str: Optional[str] = None, raise_exceptions: bool = True) -> None:
         """
         Load private and public key.
 
@@ -48,13 +43,22 @@ class APIClient:
             gateway_public_key_path: Path to Payment Gateway's public key
             private_key_password: Optional password to Merchant’s private key
             api_url: The API's url
+            session_generator_str: Python package path to the Session generator
             raise_exceptions: Whether should functions return APIResponse with errors or raise exceptions.
 
         Warnings:
             If cart specified is specified it has to have at least 1 item (e.g. “Your purchase”) and at most 2 items.
             (e.g. “Your purchase” and “Shipping & Handling”). The limitation is given by the graphical design.
         """
-        raise NotImplementedError()
+        self.raise_exceptions = raise_exceptions
+        self.session = import_string(session_generator_str) if session_generator_str is not None else requests.Session()
+        self.session.headers.update({'Content-Type': 'application/json'})
+        self.api_url = api_url
+        self.private_key_password = private_key_password
+        self.gateway_public_key_path = (
+            gateway_public_key_path or os.path.join(sys.prefix, "csob_keys/mips_platebnibrana.csob.cz.pub"))
+        self.private_key_path = private_key_path
+        self.merchant_id = merchant_id
 
     def payment_init(self, order_number: str, total_amount: AmountHundredths,
                      close_payment: bool, return_url: str, description: str,
@@ -272,7 +276,13 @@ class APIClient:
         Returns:
             APIResponse
         """
-        raise NotImplementedError()
+        resource = EchoResource(self.api_url, self.merchant_id, self.get_gateway_public_key(), self.session)
+        if method == HTTPMethod.GET:
+            return resource.get(self._get_private_key())
+        elif method == HTTPMethod.POST:
+            return resource.post(self._get_private_key())
+        else:
+            raise ValueError('Invalid method for `echo`.')
 
     def customer_info(self, customer_id: str) -> APIResponse:
         """
@@ -288,3 +298,28 @@ class APIClient:
             APIResponse
         """
         raise NotImplementedError()
+
+    def _get_private_key(self) -> str:
+        """
+        Get text representation of private key.
+
+        Returns:
+            str
+        """
+        with open(self.private_key_path, "r") as f:
+            return f.read()
+
+    def get_gateway_public_key(self) -> str:
+        """
+        Get text representation of private key.
+
+        Returns:
+            str
+        """
+        if self._gateway_public_key is not None:
+            return self._gateway_public_key
+
+        with open(self.gateway_public_key_path, "r") as f:
+            self._gateway_public_key = f.read()
+
+        return self._gateway_public_key

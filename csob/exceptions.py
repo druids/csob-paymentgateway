@@ -1,11 +1,16 @@
 from typing import Optional, TYPE_CHECKING
 
+import requests
+
 if TYPE_CHECKING:
     from csob.api import APIResponse
 
 
 class CSOBBaseException(Exception):
-    pass
+    response: Optional[requests.Response]
+
+    def __init__(self, response: Optional[requests.Response] = None):
+        self.response = response
 
 
 class GatewaySignatureInvalid(CSOBBaseException):
@@ -77,15 +82,25 @@ class ServiceUnavailableResponseException(ServiceResponseException):
     http_code = 503
 
 
+HTTP_ERROR_CSOB_EXCEPTIONS = {
+    400: BadRequestResponseException,
+    403: ForbiddenResponseException,
+    404: NotFoundResponseException,
+    405: MethodNotAllowedResponseException,
+    429: TooManyRequestsResponseException,
+    503: ServiceUnavailableResponseException,
+}
+
+
 class ServiceResultCodeException(CSOBBaseException):
     code: int
     message: str
     api_response: Optional["APIResponse"]
 
-    def __init__(self, message=None, api_response=None):
+    def __init__(self, response=None, message=None, api_response=None):
         self.message = message
         self.api_response = api_response
-        super().__init__()
+        super().__init__(response)
 
 
 class MissingParameterResultCodeException(ServiceResultCodeException):

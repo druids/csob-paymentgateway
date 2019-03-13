@@ -36,4 +36,15 @@ class Item:
         if description is not None:
             self.description = description
 
-        return
+    @property
+    def dict(self):
+        out_dict = {
+            'name': self.name,
+            'amount': self.amount,
+            'quantity': self.quantity
+        }
+
+        if self.description is not None:
+            out_dict['description'] = self.description
+
+        return out_dict

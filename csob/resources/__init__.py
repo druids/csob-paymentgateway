@@ -39,7 +39,7 @@ class CSOBResource:
         }
 
     def get_url(self):
-        return urljoin(self._base_url, self.url + "/")
+        return urljoin(self._base_url, self.url)
 
     def _construct_signature_str(self, json: Dict) -> str:
         """
@@ -51,8 +51,20 @@ class CSOBResource:
         Returns:
             Signature str
         """
-        return "|".join([str(json[i]) for i in self.request_signature if
-                         (i not in self.optional_request_signature or i in json.keys())])
+        signature_list = []
+        for i in [i for i in self.request_signature if (i not in self.optional_request_signature or i in json.keys())]:
+            if type(json[i]) == list:  # Cart list of dicts
+                for j in json[i]:
+                    signature_list.extend([str(k) for k in j.values()])
+            elif json[i] is True:
+                signature_list.append('true')
+            elif json[i] is False:
+                signature_list.append('false')
+            else:
+                signature_list.append(str(json[i]))
+        print(signature_list)
+
+        return "|".join(signature_list)
 
     def _construct_verify_signature_str(self, json: Dict) -> str:
         """

@@ -28,4 +28,5 @@ sections = FUTURE, STDLIB, THIRDPARTY, CHAMBER, FIRSTPARTY, LOCALFOLDER
 trim_trailing_whitespace = false
 
 [flake8]
+
 max_line_length = 120

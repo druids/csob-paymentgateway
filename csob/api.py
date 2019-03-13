@@ -1,5 +1,6 @@
 import os
 import sys
+from base64 import b64encode
 from decimal import Decimal
 from typing import List, Optional, Union
 
@@ -12,6 +13,7 @@ from csob.enums import (
 )
 from csob.payment import Item
 from csob.resources.echo import EchoResource
+from csob.resources.payment.init import PaymentInit
 
 AmountHundredths = Union[Decimal, int]
 
@@ -32,7 +34,8 @@ class APIClient:
     raise_exceptions: bool
 
     def __init__(self, merchant_id: str, private_key_path: str, gateway_public_key_path: Optional[str] = None,
-                 private_key_password: Optional[str] = None, api_url: str = "https://api.platebnibrana.csob.cz",
+                 private_key_password: Optional[str] = None,
+                 api_url: str = "https://api.platebnibrana.csob.cz/api/v1.7/",
                  session_generator_str: Optional[str] = None, raise_exceptions: bool = True) -> None:
         """
         Load private and public key.
@@ -103,7 +106,7 @@ class APIClient:
             pay_method: Type of implicit payment method to be offered to the customer.
             merchant_data: Any additional data which are returned in the redirect from the payment gateway to the
                 merchant’s page. Such data may be used to keep continuity of the process in the e-shop,
-                they must be BASE64 encoded. Maximum length for encoding is 255 characters
+                they will be BASE64 encoded. Maximum length for encoding is 255 characters.
             customer_id: Unique customer ID assigned by the e-shop. Maximum length is 50 characters. It is used if
                 the customer’s card is remembered on the gateway and will be used to simplify next payments
             language: Preferred language mutation to be displayed on the payment gateway.
@@ -119,7 +122,17 @@ class APIClient:
         Returns:
             APIResponse
         """
-        raise NotImplementedError()
+        if type(total_amount) == Decimal:
+            total_amount = int(Decimal * 100)
+
+        return PaymentInit(self.api_url, self.merchant_id, self.get_gateway_public_key(), self.session).post(
+            key=self._get_private_key(), order_number=order_number, pay_operation=pay_operation.value,
+            pay_method=pay_method.value, total_amount=total_amount, currency=currency.value,
+            close_payment=close_payment, return_url=return_url, return_method=return_method.value,
+            description=description, language=language.value, merchant_data=b64encode(merchant_data),
+            customer_id=customer_id, cart=([i.dict for i in cart] if cart is not None else None),
+            ttl_sec=ttl_sec, logo_version=logo_version, color_scheme_version=color_scheme_version
+        )
 
     def get_payment_process_url(self, pay_id: str) -> APIResponse:
         """

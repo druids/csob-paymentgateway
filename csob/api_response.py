@@ -1,9 +1,8 @@
-from datetime import datetime
 from typing import Optional
 
 from requests import Response
 
-from csob.enums import ResultCode
+from csob.enums import ResultCode, PaymentStatus
 from csob.exceptions import SERVICE_RESULT_CODE_EXCEPTION_DICT
 
 
@@ -49,3 +48,15 @@ class APIResponse:
         if self.api_response.status_code == 200:
             return self.result_code in [0, 810, 820]
         return False
+
+    @property
+    def payment_status(self) -> Optional[PaymentStatus]:
+        if self.response_json is not None:
+            if 'paymentStatus' in self.response_json.keys():
+                return PaymentStatus(self.response_json['paymentStatus'])
+
+    @property
+    def auth_code(self) -> str:
+        if self.response_json is not None:
+            if 'authCode' in self.response_json.keys():
+                return self.response_json['authCode']

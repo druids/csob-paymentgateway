@@ -20,6 +20,11 @@ class TestCSOBResource(unittest.TestCase):
         self.assertEqual('TestId|20190310082622',
                          self.instance._construct_signature_str({'merchantId': 'TestId', 'dttm': '20190310082622'}))
 
+    def test_construct_signature_str_with_dict(self):
+        self.assertEqual('Test|Id|20190310082622',
+                         self.instance._construct_signature_str(
+                             {'merchantId': [{'id': 'Test', 'name': 'Id'}], 'dttm': '20190310082622'}))
+
     def test_construct_verify_signature_str(self):
         self.assertEqual('20190310082622|0|OK',
                          self.instance._construct_verify_signature_str(

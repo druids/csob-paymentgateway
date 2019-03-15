@@ -10,16 +10,11 @@ Welcome to CSOB Payment Gateway's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-.. autoclass:: csob.api.APIClient
+
+.. automodule:: csob.api
     :members:
 
-.. autoclass:: csob.api.APIResponse
-    :members:
-
-.. autoclass:: csob.payment.Payment
-    :members:
-
-.. autoclass:: csob.payment.Item
+.. automodule:: csob.payment
     :members:
 
 .. automodule:: csob.exceptions
@@ -28,6 +23,11 @@ Welcome to CSOB Payment Gateway's documentation!
 .. automodule:: csob.enums
     :members:
 
+.. automodule:: csob.crypto
+    :members:
+
+.. automodule:: csob.utils
+    :members:
 
 Indices and tables
 ==================

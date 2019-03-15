@@ -1,5 +1,6 @@
-from setuptools import setup, find_packages
 from os import path
+
+from setuptools import find_packages, setup
 
 from csob.version import get_version
 
@@ -36,13 +37,25 @@ setup(
     keywords='payments finance csob paymentgateway',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     python_requires='>=3.6, <4',
-    install_requires=[],
+    install_requires=[
+        'pycrypto',
+    ],
     extras_require={
         'dev': [
             'spinhx',
         ],
-        'test': [],
+        'test': [
+            'freezegun',
+        ],
     },
+    data_files=[('csob_keys', [
+        'csob_keys/mips_platebnibrana.csob.cz.cer',
+        'csob_keys/mips_platebnibrana.csob.cz.pub',
+        'csob_keys/mips_iplatebnibrana.csob.cz.cer',
+        'csob_keys/mips_iplatebnibrana.csob.cz.pub',
+        'csob_keys/rsa_test_A3746UdxZO.key',
+        'csob_keys/readme.txt',
+    ])],
     project_urls={
         'Source': 'https://github.com/druids/csob-paymentgateway',
     },

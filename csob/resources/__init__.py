@@ -62,7 +62,6 @@ class CSOBResource:
                 signature_list.append('false')
             else:
                 signature_list.append(str(json[i]))
-        print(signature_list)
 
         return "|".join(signature_list)
 
@@ -156,7 +155,7 @@ class CSOBResource:
                 return APIResponse(response, is_verified=None)
 
         is_verified = self.verify_signature(self._gateway_key, response.json())
-        if is_verified is False:
+        if is_verified is False and self.raise_exception:
             raise GatewaySignatureInvalid(response)
 
         return APIResponse(response, is_verified)
@@ -173,6 +172,15 @@ class CSOBResource:
     def get(self, *args, **kwargs) -> APIResponse:
         """
         Call GET method on the resource.
+
+        Returns:
+            `APIResponse`
+        """
+        raise NotImplementedError
+
+    def put(self, *args, **kwargs) -> APIResponse:
+        """
+        Call PUT method on the resource.
 
         Returns:
             `APIResponse`

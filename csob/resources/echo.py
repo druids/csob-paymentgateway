@@ -1,11 +1,11 @@
-import json as json
+import json
 from urllib.parse import urljoin
 
 from . import CSOBResource
 
 
 class EchoResource(CSOBResource):
-    url = 'echo'
+    url = 'echo/'
     request_signature = ('merchantId', 'dttm')
     response_signature = ('dttm', 'resultCode', 'resultMessage')
 

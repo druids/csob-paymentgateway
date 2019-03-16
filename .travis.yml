@@ -11,5 +11,4 @@ install:
   - pip freeze
 # command to run tests
 script:
-    - flake8 .
-    - mypy csob_paymentgateway
+    - flake8 csob

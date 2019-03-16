@@ -2,18 +2,23 @@ import os
 import sys
 from base64 import b64encode
 from decimal import Decimal
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 
 import requests
 import import_string
 
 from csob.api_response import APIResponse
 from csob.enums import (
-    Currency, HTTPMethod, Language, PaymentButtonBrand, PayMethod, PayOperation, ResultCode
-)
+    Currency, HTTPMethod, Language, PaymentButtonBrand, PayMethod, PayOperation)
 from csob.payment import Item
 from csob.resources.echo import EchoResource
+from csob.resources.payment.close import PaymentCloseResource
+from csob.resources.customer import CustomerInfoResource
 from csob.resources.payment.init import PaymentInit
+from csob.resources.payment.process import PaymentProcess
+from csob.resources.payment.refund import PaymentRefundResource
+from csob.resources.payment.reverse import PaymentReverseResource
+from csob.resources.payment.status import PaymentStatusResource
 
 AmountHundredths = Union[Decimal, int]
 
@@ -123,9 +128,9 @@ class APIClient:
             APIResponse
         """
         if type(total_amount) == Decimal:
-            total_amount = int(Decimal * 100)
+            total_amount = int(total_amount * 100)
 
-        return PaymentInit(self.api_url, self.merchant_id, self.get_gateway_public_key(), self.session).post(
+        return PaymentInit(**self.get_resource_kwargs()).post(
             key=self._get_private_key(), order_number=order_number, pay_operation=pay_operation.value,
             pay_method=pay_method.value, total_amount=total_amount, currency=currency.value,
             close_payment=close_payment, return_url=return_url, return_method=return_method.value,
@@ -147,7 +152,7 @@ class APIClient:
         Returns:
             APIResponse
         """
-        raise NotImplementedError()
+        return PaymentProcess(**self.get_resource_kwargs()).get(self._get_private_key(), pay_id)
 
     def get_payment_button_params(self, pay_id: str, brand: PaymentButtonBrand) -> APIResponse:
         """
@@ -165,7 +170,7 @@ class APIClient:
         """
         raise NotImplementedError()
 
-    def parse_payment_return_url_get(self, url: str) -> APIResponse:
+    def parse_payment_return_url_get(self, get_dict: dict) -> APIResponse:
         """
         Parse the incoming redirect from payment gate.
 
@@ -178,12 +183,12 @@ class APIClient:
             -- e.g. cancel payment by user -- GET redirect is always performed).
 
         Args:
-            url: The url to which the user has been redirected from the payment gateway.
+            get_dict: The get parameters received
 
         Returns:
             APIResponse - Return values are identical with the definition contained in the payment/init operation.
         """
-        raise NotImplementedError()
+        return PaymentProcess(**self.get_resource_kwargs()).parse_response_dict(get_dict)
 
     def parse_payment_return_url_post(self, post_data: dict) -> APIResponse:
         """
@@ -203,7 +208,7 @@ class APIClient:
         Returns:
             APIResponse - Return values are identical with the definition contained in the payment/init operation.
         """
-        raise NotImplementedError()
+        return PaymentProcess(**self.get_resource_kwargs()).parse_response_dict(post_data)
 
     def payment_status(self, pay_id: str) -> APIResponse:
         """
@@ -218,7 +223,7 @@ class APIClient:
         Returns:
             APIResponse - Return values are identical with the definition contained in the payment/init operation.
         """
-        raise NotImplementedError()
+        return PaymentStatusResource(**self.get_resource_kwargs()).get(self._get_private_key(), pay_id)
 
     def payment_reverse(self, pay_id: str) -> APIResponse:
         """
@@ -233,7 +238,7 @@ class APIClient:
         Returns:
             APIResponse - Return values are identical with the definition contained in the payment/init operation.
         """
-        raise NotImplementedError()
+        return PaymentReverseResource(**self.get_resource_kwargs()).put(self._get_private_key(), pay_id)
 
     def payment_close(self, pay_id: str, total_amount: Optional[AmountHundredths]) -> APIResponse:
         """
@@ -251,9 +256,12 @@ class APIClient:
         Returns:
             APIResponse - Return values are identical with the definition contained in the payment/init operation.
         """
-        raise NotImplementedError()
+        if type(total_amount) == Decimal:
+            total_amount = int(total_amount * 100)
 
-    def payment_refund(self, pay_id: str, amount: Optional[AmountHundredths]) -> APIResponse:
+        return PaymentCloseResource(**self.get_resource_kwargs()).put(self._get_private_key(), pay_id, total_amount)
+
+    def payment_refund(self, pay_id: str, amount: Optional[AmountHundredths] = None) -> APIResponse:
         """
         Refund whole payment or it's part.
 
@@ -273,7 +281,10 @@ class APIClient:
         Returns:
             APIResponse - Return values are identical with the definition contained in the payment/init operation.
         """
-        raise NotImplementedError()
+        if type(amount) == Decimal:
+            amount = int(amount * 100)
+
+        return PaymentRefundResource(**self.get_resource_kwargs()).put(self._get_private_key(), pay_id, amount)
 
     def echo(self, method: HTTPMethod = HTTPMethod.GET) -> APIResponse:
         """
@@ -289,7 +300,7 @@ class APIClient:
         Returns:
             APIResponse
         """
-        resource = EchoResource(self.api_url, self.merchant_id, self.get_gateway_public_key(), self.session)
+        resource = EchoResource(**self.get_resource_kwargs())
         if method == HTTPMethod.GET:
             return resource.get(self._get_private_key())
         elif method == HTTPMethod.POST:
@@ -310,7 +321,7 @@ class APIClient:
         Returns:
             APIResponse
         """
-        raise NotImplementedError()
+        return CustomerInfoResource(**self.get_resource_kwargs()).get(self._get_private_key(), customer_id)
 
     def _get_private_key(self) -> str:
         """
@@ -336,3 +347,12 @@ class APIClient:
             self._gateway_public_key = f.read()
 
         return self._gateway_public_key
+
+    def get_resource_kwargs(self) -> Dict:
+        return {
+            'base_url': self.api_url,
+            'merchant_id': self.merchant_id,
+            'gateway_key': self.get_gateway_public_key(),
+            'session': self.session,
+            'raise_exception': self.raise_exceptions,
+        }

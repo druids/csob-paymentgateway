@@ -7,11 +7,16 @@ from csob.exceptions import SERVICE_RESULT_CODE_EXCEPTION_DICT
 
 
 class APIResponse:
-    api_response: Response
+    api_response: Optional[Response]
     is_verified: Optional[bool]
+    _parsed_data: Optional[dict]
 
-    def __init__(self, api_response: Response, is_verified: Optional[bool], raise_exception=False):
+    def __init__(self, api_response: Optional[Response], parsed_data: Optional[dict], is_verified: Optional[bool],
+                 raise_exception=False):
+        self._parsed_data = parsed_data
         self.api_response = api_response
+        if parsed_data is None and api_response is None:
+            raise ValueError('You have to specify at least `api_response`')
         self.is_verified = is_verified
 
         if self.is_verified:
@@ -20,12 +25,16 @@ class APIResponse:
 
     @property
     def response_json(self) -> Optional[dict]:
-        if self.http_status_code == 200:
-            return self.api_response.json()
+        if self.api_response is not None:
+            if self.http_status_code == 200:
+                return self.api_response.json()
+        else:
+            return self._parsed_data
 
     @property
-    def http_status_code(self) -> int:
-        return self.api_response.status_code
+    def http_status_code(self) -> Optional[int]:
+        if self.api_response is not None:
+            return self.api_response.status_code
 
     @property
     def result_code(self) -> Optional[ResultCode]:
@@ -45,7 +54,10 @@ class APIResponse:
         Returns:
             bool
         """
-        if self.api_response.status_code == 200:
+        if self.api_response is not None:
+            if self.api_response.status_code == 200:
+                return self.result_code in [0, 810, 820]
+        else:
             return self.result_code in [0, 810, 820]
         return False
 

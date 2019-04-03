@@ -1,2 +1,4 @@
+tox
 mock
 freezegun
+flake8

@@ -41,6 +41,7 @@ setup(
         'pycrypto',
         'import_string',
         'requests',
+        'cached-property',
     ],
     extras_require={
         'dev': [

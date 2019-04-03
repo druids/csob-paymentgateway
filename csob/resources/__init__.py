@@ -1,3 +1,4 @@
+import json
 from typing import Iterable, Tuple, Dict, Optional
 from urllib.parse import urljoin
 
@@ -11,22 +12,25 @@ from csob.utils import get_dttm
 
 class CSOBResource:
     url: str
+    url_args: Optional[Tuple[str]] = None
 
-    request_signature: Iterable[str]
+    request_signature: Tuple[str]
     optional_request_signature: Tuple[str] = tuple()
-    response_signature: Iterable[str]
+    response_signature: Tuple[str]
     optional_response_signature: Tuple[str] = tuple()
 
     _base_url: str
     _gateway_key: str
+    _private_key: str
     merchant_id: str
     session: requests.Session
     raise_exception = True
 
-    def __init__(self, base_url: str, merchant_id: str, gateway_key: str,
+    def __init__(self, base_url: str, merchant_id: str, gateway_key: str, private_key: str,
                  session: requests.Session = requests.Session(),
                  raise_exception: bool = True):
         self._gateway_key = gateway_key
+        self._private_key = private_key
         self.raise_exception = raise_exception
         self.merchant_id = merchant_id
         self._base_url = base_url
@@ -38,85 +42,119 @@ class CSOBResource:
             'dttm': get_dttm(),
         }
 
-    def get_url(self):
+    def get_url(self) -> str:
+        """
+        Join base url supplied by APIClient and resource url.
+
+        Returns:
+            URL
+        """
         return urljoin(self._base_url, self.url)
 
-    def _construct_signature_str(self, json: Dict) -> str:
+    def get_url_args(self) -> Tuple:
+        if self.url_args is not None:
+            return self.url_args
+        return self.request_signature + ('signature',)
+
+    def _construct_signature_str(self, local_json: Dict) -> str:
         """
         From json constructs signature str.
 
         Args:
-            json: JSON from which to get the signature str.
+            local_json: JSON from which to get the signature str.
 
         Returns:
             Signature str
         """
         signature_list = []
-        for i in [i for i in self.request_signature if (i not in self.optional_request_signature or i in json.keys())]:
-            if type(json[i]) == list:  # Cart list of dicts
-                for j in json[i]:
+        for i in [i for i in self.request_signature if
+                  (i not in self.optional_request_signature or i in local_json.keys())]:
+            if isinstance(local_json[i], list):  # Cart list of dicts
+                for j in local_json[i]:
                     signature_list.extend([str(k) for k in j.values()])
-            elif json[i] is True:
+            elif local_json[i] is True:
                 signature_list.append('true')
-            elif json[i] is False:
+            elif local_json[i] is False:
                 signature_list.append('false')
             else:
-                signature_list.append(str(json[i]))
+                signature_list.append(str(local_json[i]))
 
         return "|".join(signature_list)
 
-    def _construct_verify_signature_str(self, json: Dict) -> str:
+    def _construct_verify_signature_str(self, local_json: Dict) -> str:
         """
         From response json constructs signature str.
 
         Args:
-            json: JSON from which to get the signature str.
+            local_json: JSON from which to get the signature str.
 
         Returns:
             Signature str
         """
-        return "|".join([str(json[i]) for i in self.response_signature if
-                         (i not in self.optional_response_signature or i in json.keys())])
+        return "|".join([str(local_json[i]) for i in self.response_signature if
+                         (i not in self.optional_response_signature or i in local_json.keys())])
 
-    def get_signature(self, key: str, json: Dict) -> str:
+    def construct_url(self, local_json: Dict) -> str:
+        """
+        Construct whole url using url_args and local_json.
+
+        Args:
+            local_json: JSON from which to get the data for url.
+
+        Returns:
+            URL
+        """
+        url_str = ""
+
+        for arg in self.get_url_args():
+            if arg == "merchantId":
+                url_str = url_str + str(self.merchant_id) + "/"
+            elif arg == "signature":
+                url_str = url_str + str(self.get_url_signature(local_json)) + "/"
+            else:
+                url_str = url_str + str(local_json[arg]) + "/"
+
+        return urljoin(self.get_url(), url_str[:-1])
+
+    def get_signature(self, local_json: Dict) -> str:
         """
         Construct signature str and calls `csob.crypto.get_signature`.
 
         Args:
-            key: private key in string representation
-            json: JSON to be sent from which the signature str is built
+            local_json: JSON to be sent from which the signature str is built
 
         Returns:
             Signature
         """
-        return get_signature(key, self._construct_signature_str(json))
+        return get_signature(self._private_key, self._construct_signature_str(local_json))
 
-    def get_url_signature(self, key: str, json: Dict) -> str:
+    def get_url_signature(self, local_json: Dict) -> str:
         """
         Construct signature str and calls `csob.crypto.get_signature`.
 
         Args:
-            key: private key in string representation
-            json: JSON to be sent from which the signature str is built
+            local_json: JSON to be sent from which the signature str is built
 
         Returns:
             Signature
         """
-        return get_url_signature(key, self._construct_signature_str(json))
+        return get_url_signature(self._private_key, self._construct_signature_str(local_json))
 
-    def verify_signature(self, key: str, json: Dict) -> bool:
+    def verify_signature(self, local_json: Dict) -> bool:
         """
         Construct signature str for response and calls `csob.crypto.verify_signature`
 
         Args:
-            key: The public gateway key
-            json: The JSON to be verified
-            signature: The signature to be verified.
+            local_json: The JSON to be verified
+            json['signature']: The signature to be verified.
 
         Returns:
             bool
         """
-        return verify_signature(key, self._construct_verify_signature_str(json), json['signature'])
+        return verify_signature(
+            self._gateway_key,
+            self._construct_verify_signature_str(local_json), local_json['signature']
+        )
 
     def parse_response(self, response: requests.Response) -> APIResponse:
         """
@@ -154,11 +192,15 @@ class CSOBResource:
             else:
                 return APIResponse(response, is_verified=None)
 
-        is_verified = self.verify_signature(self._gateway_key, response.json())
+        is_verified = self.verify_signature(response.json())
         if is_verified is False and self.raise_exception:
             raise GatewaySignatureInvalid(response)
 
-        return APIResponse(response, is_verified)
+        return APIResponse(response, is_verified=is_verified)
+
+    def _sign_json(self, local_json: Dict) -> Dict:
+        local_json['signature'] = self.get_signature(local_json)
+        return local_json
 
     def post(self, *args, **kwargs) -> APIResponse:
         """
@@ -169,6 +211,9 @@ class CSOBResource:
         """
         raise NotImplementedError()
 
+    def _sign_and_post(self, local_json: Dict) -> APIResponse:
+        return self.parse_response(self.session.post(self.get_url(), data=json.dumps(self._sign_json(local_json))))
+
     def get(self, *args, **kwargs) -> APIResponse:
         """
         Call GET method on the resource.
@@ -178,6 +223,12 @@ class CSOBResource:
         """
         raise NotImplementedError
 
+    def _get(self, url: str) -> APIResponse:
+        return self.parse_response(self.session.get(url))
+
+    def _construct_url_and_get(self, local_json: Dict) -> APIResponse:
+        return self._get(self.construct_url(local_json))
+
     def put(self, *args, **kwargs) -> APIResponse:
         """
         Call PUT method on the resource.
@@ -186,3 +237,6 @@ class CSOBResource:
             `APIResponse`
         """
         raise NotImplementedError
+
+    def _sign_and_put(self, local_json: Dict) -> APIResponse:
+        return self.parse_response(self.session.put(self.get_url(), data=json.dumps(self._sign_json(local_json))))

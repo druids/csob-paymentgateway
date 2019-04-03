@@ -1,5 +1,6 @@
 from typing import Optional
 
+from cached_property import cached_property
 from requests import Response
 
 from csob.enums import ResultCode, PaymentStatus
@@ -7,12 +8,12 @@ from csob.exceptions import SERVICE_RESULT_CODE_EXCEPTION_DICT
 
 
 class APIResponse:
-    api_response: Optional[Response]
-    is_verified: Optional[bool]
-    _parsed_data: Optional[dict]
+    api_response: Optional[Response] = None
+    is_verified: Optional[bool] = None
+    _parsed_data: Optional[dict] = None
 
-    def __init__(self, api_response: Optional[Response], parsed_data: Optional[dict], is_verified: Optional[bool],
-                 raise_exception=False):
+    def __init__(self, api_response: Optional[Response] = None, parsed_data: Optional[dict] = None,
+                 is_verified: Optional[bool] = None, raise_exception=False):
         self._parsed_data = parsed_data
         self.api_response = api_response
         if parsed_data is None and api_response is None:
@@ -23,7 +24,7 @@ class APIResponse:
             if raise_exception and self.is_okay is False:
                 raise SERVICE_RESULT_CODE_EXCEPTION_DICT[self.result_code]
 
-    @property
+    @cached_property
     def response_json(self) -> Optional[dict]:
         if self.api_response is not None:
             if self.http_status_code == 200:
@@ -31,22 +32,25 @@ class APIResponse:
         else:
             return self._parsed_data
 
-    @property
+    @cached_property
     def http_status_code(self) -> Optional[int]:
         if self.api_response is not None:
             return self.api_response.status_code
+        return None
 
-    @property
+    @cached_property
     def result_code(self) -> Optional[ResultCode]:
         if self.response_json is not None:
             return self.response_json['resultCode']
+        return None
 
-    @property
+    @cached_property
     def result_message(self) -> Optional[str]:
         if self.response_json is not None:
             return self.response_json['resultMessage']
+        return None
 
-    @property
+    @cached_property
     def is_okay(self) -> bool:
         """
         Check if result code is OK or 810 or 820.
@@ -54,21 +58,21 @@ class APIResponse:
         Returns:
             bool
         """
-        if self.api_response is not None:
-            if self.api_response.status_code == 200:
-                return self.result_code in [0, 810, 820]
-        else:
-            return self.result_code in [0, 810, 820]
-        return False
+        if getattr(self.api_response, "status_code", 200) != 200:
+            return False
 
-    @property
+        return self.result_code in [0, 810, 820]
+
+    @cached_property
     def payment_status(self) -> Optional[PaymentStatus]:
         if self.response_json is not None:
             if 'paymentStatus' in self.response_json.keys():
                 return PaymentStatus(self.response_json['paymentStatus'])
+        return None
 
-    @property
-    def auth_code(self) -> str:
+    @cached_property
+    def auth_code(self) -> Optional[str]:
         if self.response_json is not None:
             if 'authCode' in self.response_json.keys():
                 return self.response_json['authCode']
+        return None

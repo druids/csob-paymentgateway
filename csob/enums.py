@@ -6,8 +6,8 @@ class PayOperation(Enum):
     Type of payment operation.
     """
 
-    PAYMENT = "payment"
-    ONE_CLICK_PAYMENT = "oneclickPayment"
+    PAYMENT = 'payment'
+    ONE_CLICK_PAYMENT = 'oneclickPayment'
 
 
 class PayMethod(Enum):
@@ -15,7 +15,7 @@ class PayMethod(Enum):
     Type of implicit payment method to be offered to the customer.
     """
 
-    CARD = "card"
+    CARD = 'card'
 
 
 class Currency(Enum):
@@ -23,16 +23,16 @@ class Currency(Enum):
     Currency code.
     """
 
-    CZK = "CZK"
-    EUR = "EUR"
-    USD = "USD"
-    GBP = "GBP"
-    HUF = "HUF"
-    PLN = "PLN"
-    HRK = "HRK"
-    RON = "RON"
-    NOK = "NOK"
-    SEK = "SEK"
+    CZK = 'CZK'
+    EUR = 'EUR'
+    USD = 'USD'
+    GBP = 'GBP'
+    HUF = 'HUF'
+    PLN = 'PLN'
+    HRK = 'HRK'
+    RON = 'RON'
+    NOK = 'NOK'
+    SEK = 'SEK'
 
 
 class HTTPMethod(Enum):
@@ -40,8 +40,8 @@ class HTTPMethod(Enum):
     The return method to e-shop’s URL.
     """
 
-    POST = "POST"
-    GET = "GET"
+    POST = 'POST'
+    GET = 'GET'
 
 
 class Language(Enum):
@@ -49,31 +49,31 @@ class Language(Enum):
     Preferred language mutation to be displayed on the payment gateway.
     """
 
-    CZ = "CZ"
-    EN = "EN"
-    DE = "DE"
-    FR = "FR"
-    HU = "HU"
-    IT = "IT"
-    JP = "JP"
-    PL = "PL"
-    PT = "PT"
-    RO = "RO"
-    RU = "RU"
-    SK = "SK"
-    ES = "ES"
-    TR = "TR"
-    VN = "VN"
-    HR = "HR"
-    SI = "SI"
+    CZ = 'CZ'
+    EN = 'EN'
+    DE = 'DE'
+    FR = 'FR'
+    HU = 'HU'
+    IT = 'IT'
+    JP = 'JP'
+    PL = 'PL'
+    PT = 'PT'
+    RO = 'RO'
+    RU = 'RU'
+    SK = 'SK'
+    ES = 'ES'
+    TR = 'TR'
+    VN = 'VN'
+    HR = 'HR'
+    SI = 'SI'
 
 
 class PaymentButtonBrand(Enum):
     """
     The payment button brand.
     """
-    CSOB = "csob"
-    ERA = "era"
+    CSOB = 'csob'
+    ERA = 'era'
 
 
 class PaymentStatus(IntEnum):

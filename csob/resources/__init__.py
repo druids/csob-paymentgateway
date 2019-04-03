@@ -1,4 +1,3 @@
-import json
 from itertools import chain
 from typing import Iterable, Tuple, Dict, Optional, List, Any
 from urllib.parse import urljoin
@@ -13,12 +12,12 @@ from csob.utils import get_dttm
 
 class CSOBResource:
     url: str
-    url_args: Optional[Tuple[str]] = None
+    url_args: Optional[Tuple[str, ...]] = None
 
-    request_signature: Tuple[str]
-    optional_request_signature: Tuple[str] = tuple()
-    response_signature: Tuple[str]
-    optional_response_signature: Tuple[str] = tuple()
+    request_signature: Tuple[str, ...]
+    optional_request_signature: Tuple[str, ...] = tuple()
+    response_signature: Tuple[str, ...]
+    optional_response_signature: Tuple[str, ...] = tuple()
 
     _base_url: str
     _gateway_key: str
@@ -29,7 +28,7 @@ class CSOBResource:
 
     def __init__(self, base_url: str, merchant_id: str, gateway_key: str, private_key: str,
                  session: requests.Session = requests.Session(),
-                 raise_exception: bool = True):
+                 raise_exception: bool = True) -> None:
         self._gateway_key = gateway_key
         self._private_key = private_key
         self.raise_exception = raise_exception
@@ -89,8 +88,8 @@ class CSOBResource:
             return ['true']
         elif item is False:
             return ['false']
-        else:
-            return [str(item)]
+
+        return [str(item)]
 
     def _construct_signature_str(self, local_json: Dict) -> str:
         """
@@ -228,26 +227,8 @@ class CSOBResource:
         local_json['signature'] = self.get_signature(local_json)
         return local_json
 
-    def post(self, *args, **kwargs) -> APIResponse:
-        """
-        Call POST method on the resource.
-
-        Returns:
-            `APIResponse`
-        """
-        raise NotImplementedError()
-
     def _sign_and_post(self, local_json: Dict) -> APIResponse:
-        return self.parse_response(self.session.post(self.get_url(), data=json.dumps(self._sign_json(local_json))))
-
-    def get(self, *args, **kwargs) -> APIResponse:
-        """
-        Call GET method on the resource.
-
-        Returns:
-            `APIResponse`
-        """
-        raise NotImplementedError
+        return self.parse_response(self.session.post(self.get_url(), json=self._sign_json(local_json)))
 
     def _get(self, url: str) -> APIResponse:
         return self.parse_response(self.session.get(url))
@@ -255,14 +236,5 @@ class CSOBResource:
     def _construct_url_and_get(self, local_json: Dict) -> APIResponse:
         return self._get(self.construct_url(local_json))
 
-    def put(self, *args, **kwargs) -> APIResponse:
-        """
-        Call PUT method on the resource.
-
-        Returns:
-            `APIResponse`
-        """
-        raise NotImplementedError
-
     def _sign_and_put(self, local_json: Dict) -> APIResponse:
-        return self.parse_response(self.session.put(self.get_url(), data=json.dumps(self._sign_json(local_json))))
+        return self.parse_response(self.session.put(self.get_url(), json=self._sign_json(local_json)))

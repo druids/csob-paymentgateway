@@ -13,7 +13,7 @@ class APIResponse:
     _parsed_data: Optional[dict] = None
 
     def __init__(self, api_response: Optional[Response] = None, parsed_data: Optional[dict] = None,
-                 is_verified: Optional[bool] = None, raise_exception=False):
+                 is_verified: Optional[bool] = None, raise_exception=False) -> None:
         self._parsed_data = parsed_data
         self.api_response = api_response
         if parsed_data is None and api_response is None:
@@ -29,8 +29,7 @@ class APIResponse:
         if self.api_response is not None:
             if self.http_status_code == 200:
                 return self.api_response.json()
-        else:
-            return self._parsed_data
+        return self._parsed_data
 
     @cached_property
     def http_status_code(self) -> Optional[int]:

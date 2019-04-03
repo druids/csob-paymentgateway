@@ -1,6 +1,8 @@
 import json
 from typing import Optional, List
 
+from csob.api_response import APIResponse
+
 from csob.resources.payment import PaymentCSOBResource
 
 
@@ -16,7 +18,7 @@ class PaymentInitResource(PaymentCSOBResource):
              close_payment: bool, return_url: str, return_method: str, description: str, language: str,
              merchant_data: Optional[str], customer_id: Optional[str], cart: Optional[List[dict]] = None,
              ttl_sec: Optional[int] = None, logo_version: Optional[int] = None,
-             color_scheme_version: Optional[int] = None):
+             color_scheme_version: Optional[int] = None) -> APIResponse:
         local_json = self.get_base_json()
 
         if len(order_number) > 10:

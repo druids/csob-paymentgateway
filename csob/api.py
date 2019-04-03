@@ -131,7 +131,8 @@ class APIClient:
             order_number=order_number, pay_operation=pay_operation.value,
             pay_method=pay_method.value, total_amount=total_amount, currency=currency.value,
             close_payment=close_payment, return_url=return_url, return_method=return_method.value,
-            description=description, language=language.value, merchant_data=b64encode(merchant_data),
+            description=description, language=language.value,
+            merchant_data=str(b64encode(bytes(merchant_data, "utf-8")), "utf-8") if merchant_data is not None else None,
             customer_id=customer_id, cart=([i.dict for i in cart] if cart is not None else None),
             ttl_sec=ttl_sec, logo_version=logo_version, color_scheme_version=color_scheme_version
         )

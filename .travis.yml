@@ -12,4 +12,5 @@ install:
 # command to run tests
 script:
     - flake8 csob
+    - mypy csob
     - python -m unittest discover

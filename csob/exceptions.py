@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 class CSOBBaseException(Exception):
     response: Optional[requests.Response]
 
-    def __init__(self, response: Optional[requests.Response] = None):
+    def __init__(self, response: Optional[requests.Response] = None) -> None:
         self.response = response
 
 

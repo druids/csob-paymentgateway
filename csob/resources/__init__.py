@@ -1,5 +1,6 @@
 import json
-from typing import Iterable, Tuple, Dict, Optional
+from itertools import chain
+from typing import Iterable, Tuple, Dict, Optional, List, Any
 from urllib.parse import urljoin
 
 import requests
@@ -56,6 +57,41 @@ class CSOBResource:
             return self.url_args
         return self.request_signature + ('signature',)
 
+    def _filter_signature_str_keys(self, local_json: Dict) -> List[str]:
+        """
+        Filter which json keys we can use to construct signature.
+
+        Args:
+            local_json: The json from which the signature will be constructed.
+
+        Returns:
+            List - of json keys
+        """
+        return [i for i in self.request_signature if
+                (i not in self.optional_request_signature or i in local_json.keys())
+                ]
+
+    @staticmethod
+    def _convert_json_item_signature(item: Any) -> List[str]:
+        """
+        Converts json item into it's str form.
+
+        Args:
+            item: An item from json.
+
+        Returns:
+            List - of string representations
+        """
+        if isinstance(item, list):  # Cart list of dicts
+            for j in item:
+                return [str(k) for k in j.values()]
+        elif item is True:
+            return ['true']
+        elif item is False:
+            return ['false']
+        else:
+            return [str(item)]
+
     def _construct_signature_str(self, local_json: Dict) -> str:
         """
         From json constructs signature str.
@@ -66,20 +102,10 @@ class CSOBResource:
         Returns:
             Signature str
         """
-        signature_list = []
-        for i in [i for i in self.request_signature if
-                  (i not in self.optional_request_signature or i in local_json.keys())]:
-            if isinstance(local_json[i], list):  # Cart list of dicts
-                for j in local_json[i]:
-                    signature_list.extend([str(k) for k in j.values()])
-            elif local_json[i] is True:
-                signature_list.append('true')
-            elif local_json[i] is False:
-                signature_list.append('false')
-            else:
-                signature_list.append(str(local_json[i]))
-
-        return "|".join(signature_list)
+        return "|".join(chain.from_iterable([
+            self._convert_json_item_signature(local_json[i])
+            for i in self._filter_signature_str_keys(local_json)
+        ]))
 
     def _construct_verify_signature_str(self, local_json: Dict) -> str:
         """

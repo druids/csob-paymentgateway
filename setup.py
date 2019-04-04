@@ -39,6 +39,9 @@ setup(
     python_requires='>=3.6, <4',
     install_requires=[
         'pycrypto',
+        'import_string',
+        'requests',
+        'cached-property',
     ],
     extras_require={
         'dev': [
@@ -46,6 +49,7 @@ setup(
         ],
         'test': [
             'freezegun',
+            'mock',
         ],
     },
     data_files=[('csob_keys', [
